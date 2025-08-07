@@ -1,0 +1,39 @@
+@startuml
+title Diagramme d'activité - Fonctionnalité d'achat
+
+start
+
+:Ajouter des articles à la carte;
+
+:Cliquer sur "Payer" dans la carte;
+
+:Créer une nouvelle transaction;
+
+:Calculer le total de la transaction;
+
+:Vérifier le stock disponible;
+
+if (Stock suffisant?) then (oui)
+  :Réduire le stock;
+  
+  :Enregistrer la transaction;
+  
+  :Afficher la confirmation de paiement;
+  
+  if (Stock faible?) then (oui)
+    :Alerter la maison mère;
+    
+    :Envoyer notification de sous-stock;
+  else (non)
+  endif
+  
+  stop
+else (non)
+  :Afficher message d'erreur;
+  
+  :Stock insuffisant;
+  
+  stop
+endif
+
+@enduml

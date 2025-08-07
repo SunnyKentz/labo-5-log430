@@ -1,0 +1,440 @@
+definitions:
+  models.ApiError:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      path:
+        type: string
+      status:
+        type: integer
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+  models.ApiSuccess:
+    properties:
+      message:
+        type: string
+      path:
+        type: string
+      status:
+        type: integer
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+  models.Produit:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      nom:
+        type: string
+      prix:
+        type: number
+      quantite:
+        type: integer
+    type: object
+  models.Transaction:
+    properties:
+      caisse:
+        type: string
+      date:
+        type: string
+      deja_retourne:
+        type: boolean
+      id:
+        type: integer
+      magasin:
+        type: string
+      montant:
+        type: number
+      produit_ids:
+        type: string
+      type:
+        type: string
+    type: object
+host: localhost/magasin
+info:
+  contact:
+    email: fiber@swagger.io
+    name: API Support
+  description: This is the API for the Magasin service.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Magasin API
+  version: "1.0"
+paths:
+  /api/v1/cart:
+    get:
+      description: Get all items in the cart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Produit'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Get Cart Items
+      tags:
+      - cart
+  /api/v1/cart/{id}:
+    delete:
+      description: Remove a product from the cart
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Remove from Cart
+      tags:
+      - cart
+    post:
+      description: Add a product to the cart
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Add to Cart
+      tags:
+      - cart
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate an employee with the Mere system
+      parameters:
+      - description: Login Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            caisse:
+              type: string
+            magasin:
+              type: string
+            password:
+              type: string
+            username:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT Token
+          schema:
+            properties:
+              token:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Login
+      tags:
+      - Authentication
+  /api/v1/produit/{id}:
+    post:
+      description: Request to restock a product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Request Restock
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update a product's details
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Product Data
+        in: body
+        name: product
+        required: true
+        schema:
+          properties:
+            description:
+              type: string
+            nom:
+              type: string
+            prix:
+              format: float64
+              type: number
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Update Product
+      tags:
+      - products
+  /api/v1/produit/{id}/{qt}:
+    put:
+      description: Restock a product with a given quantity
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Quantity
+        in: path
+        name: qt
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Restock Product
+      tags:
+      - products
+  /api/v1/produits:
+    get:
+      description: Get all products
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Produit'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Get Products
+      tags:
+      - products
+  /api/v1/produits/{nom}:
+    get:
+      description: Find a product by name
+      parameters:
+      - description: Product Name
+        in: path
+        name: nom
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Produit'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Find Product
+      tags:
+      - products
+  /api/v1/rembourser/{id}:
+    post:
+      description: Refund a transaction by its ID
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Refund Transaction
+      tags:
+      - sales
+  /api/v1/transactions:
+    get:
+      description: Get all transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaction'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Get Transactions
+      tags:
+      - sales
+  /api/v1/vendre:
+    post:
+      description: Finalize the sale of items in the cart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - Magasin: []
+      - Caisse: []
+      summary: Make a Sale
+      tags:
+      - sales
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  Caisse:
+    in: header
+    name: C-Caisse
+    type: apiKey
+  Magasin:
+    in: header
+    name: C-Mag
+    type: apiKey
+swagger: "2.0"

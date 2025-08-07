@@ -1,0 +1,143 @@
+definitions:
+  models.ApiError:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      path:
+        type: string
+      status:
+        type: integer
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+  models.ApiSuccess:
+    properties:
+      message:
+        type: string
+      path:
+        type: string
+      status:
+        type: integer
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+host: localhost/auth
+info:
+  contact:
+    email: fiber@swagger.io
+    name: API Support
+  description: This is the API for the auth.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: auth API
+  version: "1.0"
+paths:
+  /api/v1/login:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Authenticates an employee
+      parameters:
+      - description: Username
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      - description: Role
+        in: formData
+        name: role
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              jwt:
+                type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Login
+      tags:
+      - auth
+  /api/v1/register:
+    post:
+      consumes:
+      - application/json
+      description: add a new user
+      parameters:
+      - description: username to add
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            username:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Register
+      tags:
+      - register
+  /api/v1/validate:
+    post:
+      consumes:
+      - application/json
+      description: Validate a JWT token
+      parameters:
+      - description: JWT Token
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            jwt:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Validate JWT
+      tags:
+      - jwt
+swagger: "2.0"

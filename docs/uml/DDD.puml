@@ -1,0 +1,105 @@
+@startuml
+
+hide circle
+hide method
+
+title Modèle selon le domaine (DDD)
+
+package "Maison mère" <<Frame>> {
+  class Transaction {
+    -id: int
+    -total: float
+    -type: string
+    -date: datetime
+    -employeId: int
+    -caisseId: int
+    -statut: string
+  }
+  
+  class DBMere {
+    -host: string
+    -port: int
+    -database: string
+    -username: string
+    -password: string
+  }
+}
+
+package "Magasin" <<Frame>> {
+  class Caisse {
+    -id: int
+    -nom: string
+    -statut: string
+    -magasinId: int
+  }
+  
+  class Panier {
+    -id: int
+    -caisseId: int
+    -dateCreation: datetime
+  }
+  
+  class DBMagasin {
+    -host: string
+    -port: int
+    -database: string
+    -username: string
+    -password: string
+  }
+}
+
+package "Centre de logistique" <<Frame>> {
+  class Produit {
+    -id: int
+    -nom: string
+    -prix: float
+    -categorie: string
+    -quantite: int
+    -seuilAlerte: int
+    -description: string
+  }
+  
+  class DBProduit {
+    -host: string
+    -port: int
+    -database: string
+    -username: string
+    -password: string
+  }
+}
+
+package "Auth" <<Frame>> {
+  class Utilisateur {
+    -id: int
+    -nom: string
+    -email: string
+    -role: string
+    -motDePasse: string
+  }
+  
+  class Auth {
+    -token: string
+    -expiration: datetime
+    +authentifier(email: string, motDePasse: string): bool
+    +genererToken(utilisateurId: int): string
+  }
+}
+
+' Relations entre entités
+Caisse ||--o{ Transaction : "traite"
+Transaction ||--o{ Produit : "contient"
+Panier ||--o{ Produit : "inclut"
+
+' Relations avec les bases de données
+DBMere ||--o{ Transaction : "persiste"
+DBMagasin ||--o{ Caisse : "persiste"
+DBMagasin ||--o{ Panier : "persiste"
+DBProduit ||--o{ Produit : "persiste"
+
+' Relations Auth
+Utilisateur ||--o{ Auth : "utilise"
+
+' Caisse uses Auth to open a new caisse
+Caisse ..> Auth : "ouvre (authentification)"
+
+@enduml

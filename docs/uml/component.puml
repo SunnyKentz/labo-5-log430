@@ -1,0 +1,53 @@
+@startuml
+skinparam componentStyle uml2
+
+rectangle "Server Side" {
+    component "PostgreSQL" <<Database>> as pg
+    component "Docker" <<Container>> as docker
+    component "Go Fiber" <<Web Framework>> as fiber
+    component "GORM" <<ORM>> as orm
+}
+
+rectangle "API Gateway / Load Balancer" {
+    component "Traefik" <<Gateway>><<Load Balancer>> as traefik
+}
+
+rectangle "Client Side" {
+    component "Browser" <<internet browser>> as bs
+    component "HTTP Client" <<API Client>> as http
+}
+
+rectangle "External Services" {
+    component "Docker Hub" <<Registry>> as hub
+}
+
+rectangle "Monitoring Stack" {
+    component "Prometheus" <<Metrics Collector>><<Container>> as prometheus
+    component "Grafana" <<Dashboard>><<Container>> as grafana
+}
+
+' Server side connections
+[docker] -- [pg] : <<hosts>>
+[fiber] -- [orm] : <<uses>>
+[orm] -- [pg] : <<connects to>>
+
+' Traefik as bridge to server side
+[traefik] -- [fiber] : <<routes traffic>>
+[traefik] -- [docker] : <<integrates with>>
+
+' Client side connections
+[bs] -- [http] : <<uses>>
+[http] -- [traefik] : <<HTTP requests>>
+
+' External connections
+[docker] -- [hub] : <<pulls from>>
+[prometheus] -- [hub] : <<pulls from>>
+[grafana] -- [hub] : <<pulls from>>
+[traefik] -- [hub] : <<pulls from>>
+
+' Monitoring connections
+[fiber] -- [prometheus] : <<exposes metrics>>
+[prometheus] -- [grafana] : <<provides data>>
+[bs] -- [grafana] : <<accesses dashboards>>
+
+@enduml

@@ -1,0 +1,28 @@
+@startuml
+title Diagramme d'activité - Modification d'un produit (propagation depuis la maison mère)
+
+start
+
+:Aller sur la fiche du produit à la maison mère;
+
+:Clique sur "Modifier le prix";
+
+:Entrer le nouveau prix;
+
+:Confirmer la modification;
+
+:Mettre à jour le prix du produit à la maison mère;
+
+:Propager la modification au centre logistique;
+
+:Centre logistique met à jour le prix du produit;
+
+:Propager la modification à tous les magasins;
+
+:Chaque magasin met à jour le prix du produit;
+
+:Afficher confirmation de la propagation du changement de prix;
+
+stop
+
+@enduml

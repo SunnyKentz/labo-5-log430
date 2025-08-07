@@ -1,0 +1,36 @@
+@startuml
+title Diagramme d'activité - Génération de rapport
+
+start
+
+:Cliquer sur le bouton "Générer rapport";
+
+:Demander les transactions à tous les magasins;
+
+:Recevoir les transactions de chaque magasin;
+
+:Appliquer les filtres de rapport;
+
+:Traiter les données par magasin;
+
+fork
+  :Générer rapport pour Magasin 1;
+  :Calculer statistiques;
+  :Formater les données;
+fork again
+  :Générer rapport pour Magasin 2;
+  :Calculer statistiques;
+  :Formater les données;
+fork again
+  :Générer rapport pour Magasin 3;
+  :Calculer statistiques;
+  :Formater les données;
+end fork
+
+:Consolider tous les rapports;
+
+:Afficher le rapport final;
+
+stop
+
+@enduml

@@ -1,0 +1,185 @@
+services:
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    command:
+      - --api.insecure=true
+      - --providers.docker
+    ports:
+      - "80:80"
+      - "8081:8080" # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  magasin:
+    build:
+      context: .
+      dockerfile: ./caisse_app_scaled/magasin/Dockerfile
+    image: ${USERNAME}/caisse-app-magasin:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - dbmagasin
+      - traefik
+    labels:
+      - "traefik.http.routers.magasin.rule=(Host(`localhost`) || Host(`172.17.0.1`)) && PathPrefix(`/magasin`)"
+      - "traefik.http.services.magasin.loadbalancer.server.port=8080"
+      - "traefik.http.middlewares.mag-cors.headers.accesscontrolalloworiginlist=http://localhost,http://172.17.0.1"
+      - "traefik.http.middlewares.mag-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.mag-cors.headers.accesscontrolmaxage=86400"
+      - "traefik.http.routers.magasin.middlewares=mag-cors"
+
+  logistique:
+    build:
+      context: .
+      dockerfile: ./caisse_app_scaled/centre_logistique/Dockerfile
+    image: ${USERNAME}/caisse-app-logistique:latest
+    ports:
+      - "8091:8091"
+    depends_on:
+      - dblogistique
+      - traefik
+    labels:
+      - "traefik.http.routers.logistique.rule=(Host(`localhost`) || Host(`172.17.0.1`)) && PathPrefix(`/logistique`)"
+      - "traefik.http.services.logistique.loadbalancer.server.port=8091"
+      - "traefik.http.middlewares.log-cors.headers.accesscontrolalloworiginlist=http://localhost,http://172.17.0.1"
+      - "traefik.http.middlewares.log-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.log-cors.headers.accesscontrolmaxage=86400"
+      - "traefik.http.routers.logistique.middlewares=log-cors"
+
+  mere:
+    build:
+      context: .
+      dockerfile: ./caisse_app_scaled/maison_mere/Dockerfile
+    image: ${USERNAME}/caisse-app-mere:latest
+    ports:
+      - "8090:8090"
+    depends_on:
+      - dbMere
+      - traefik
+    labels:
+      - "traefik.http.routers.mere.rule=( Host(`localhost`) || Host(`172.17.0.1`)) && PathPrefix(`/mere`)"
+      - "traefik.http.services.mere.loadbalancer.server.port=8090"
+      - "traefik.http.middlewares.mere-cors.headers.accesscontrolalloworiginlist=http://localhost,http://172.17.0.1"
+      - "traefik.http.middlewares.mere-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.mere-cors.headers.accesscontrolmaxage=86400"
+      - "traefik.http.routers.mere.middlewares=mere-cors"
+
+  auth:
+    build:
+      context: .
+      dockerfile: ./caisse_app_scaled/auth/Dockerfile
+    image: ${USERNAME}/caisse-app-auth:latest
+    ports:
+      - "8092:8092"
+    depends_on:
+      - traefik
+    labels:
+      - "traefik.http.routers.auth.rule=(Host(`localhost`) || Host(`172.17.0.1`)) && PathPrefix(`/auth`)"
+      - "traefik.http.services.auth.loadbalancer.server.port=8092"
+      - "traefik.http.middlewares.auth-cors.headers.accesscontrolalloworiginlist=http://localhost,http://172.17.0.1"
+      - "traefik.http.middlewares.auth-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS"
+      - "traefik.http.middlewares.auth-cors.headers.accesscontrolmaxage=86400"
+      - "traefik.http.routers.auth.middlewares=auth-cors"
+
+  dbmagasin:
+    image: postgres:15
+    container_name: magasin_db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_magasin:/var/lib/postgresql/data
+      - ./data/initMagasin.sql:/docker-entrypoint-initdb.d/initMagasin.sql
+    labels:
+      - traefik.enable=false
+
+  dblogistique:
+    image: postgres:15
+    container_name: logistic_db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_logistique:/var/lib/postgresql/data
+      - ./data/initLogistique.sql:/docker-entrypoint-initdb.d/initLogistique.sql
+    labels:
+      - traefik.enable=false
+
+  dbMere:
+    image: postgres:15
+    container_name: mere_db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data_mere:/var/lib/postgresql/data
+      - ./data/initMere.sql:/docker-entrypoint-initdb.d/initMere.sql
+    labels:
+      - traefik.enable=false
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./data/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+    depends_on:
+      - magasin
+      - logistique
+      - mere
+    labels:
+      - traefik.enable=false
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    labels:
+      - traefik.enable=false
+
+  dbtest:
+    image: postgres:15
+    container_name: caisse_db_test
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_DB=postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data_test:/var/lib/postgresql/data
+      - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # wokflowTest:
+  #   build:
+  #     context: .
+  #     dockerfile: ./.github/workflows/Dockerfile
+  #   image: ${USERNAME}/test-workflow:latest
+  
+volumes:
+  postgres_data_magasin:
+  postgres_data_logistique:
+  postgres_data_mere:
+  postgres_data_test:
+  grafana_data:

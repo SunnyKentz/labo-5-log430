@@ -1,0 +1,33 @@
+@startuml
+title Diagramme d'activité - Fonctionnalité de retour
+
+start
+
+:Accéder à la liste des transactions;
+
+:Cliquer sur une transaction;
+
+:Cliquer sur le bouton "Retour";
+
+if (Transaction éligible pour retour?) then (oui)
+  :Afficher le formulaire de retour;
+  
+  
+  :Confirmer le retour;
+  
+  :Mettre à jour le stock;
+  
+  :Créer une transaction de retour;
+  
+  :Afficher la confirmation;
+  
+  stop
+else (non)
+  :Afficher message d'erreur;
+  
+  :Transaction non éligible;
+  
+  stop
+endif
+
+@enduml

@@ -1,0 +1,430 @@
+definitions:
+  api.Body:
+    properties:
+      host:
+        type: string
+      message:
+        type: string
+    type: object
+  models.ApiError:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+      path:
+        type: string
+      status:
+        type: integer
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+  models.ApiSuccess:
+    properties:
+      message:
+        type: string
+      path:
+        type: string
+      status:
+        type: integer
+      success:
+        type: boolean
+      timestamp:
+        type: string
+    type: object
+  models.Produit:
+    properties:
+      category:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      nom:
+        type: string
+      prix:
+        type: number
+      quantite:
+        type: integer
+    type: object
+  models.Transaction:
+    properties:
+      caisse:
+        type: string
+      date:
+        type: string
+      deja_retourne:
+        type: boolean
+      id:
+        type: integer
+      magasin:
+        type: string
+      montant:
+        type: number
+      produit_ids:
+        type: string
+      type:
+        type: string
+    type: object
+host: localhost/mere
+info:
+  contact:
+    email: fiber@swagger.io
+    name: API Support
+  description: This is the API for the maison mere.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Maison mere API
+  version: "1.0"
+paths:
+  /api/v1/alerts:
+    get:
+      description: Retrieves all notifications
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/api.Body'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get Alerts
+      tags:
+      - notifications
+  /api/v1/analytics/{mag}:
+    get:
+      description: Retrieves analytics for a store
+      parameters:
+      - description: Store Name (or 'tout' for all)
+        in: path
+        name: mag
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      - BearerAuth: []
+      summary: Get Analytics
+      tags:
+      - analytics
+  /api/v1/magasins:
+    get:
+      description: Retrieves all stores
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: string
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get Magasins
+      tags:
+      - magasins
+  /api/v1/merelogin:
+    post:
+      consumes:
+      - application/json
+      description: enregistre un nouveau client
+      parameters:
+      - description: Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            password:
+              type: string
+            username:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            properties:
+              token:
+                type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Mere register
+      tags:
+      - auth
+  /api/v1/notify:
+    post:
+      consumes:
+      - application/json
+      description: Receives a notification
+      parameters:
+      - description: Notification Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.Body'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Notify
+      tags:
+      - notifications
+  /api/v1/produit:
+    put:
+      consumes:
+      - application/json
+      description: Updates a product
+      parameters:
+      - description: Product Update Data
+        in: body
+        name: product
+        required: true
+        schema:
+          properties:
+            description:
+              type: string
+            nom:
+              type: string
+            prix:
+              format: float64
+              type: number
+            productId:
+              type: integer
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      summary: Update Product
+      tags:
+      - produits
+  /api/v1/produits/{nom}:
+    get:
+      description: Finds a product by name
+      parameters:
+      - description: Product Name
+        in: path
+        name: nom
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Produit'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      security:
+      - BearerAuth: []
+      summary: Find Product
+      tags:
+      - produits
+  /api/v1/raport:
+    get:
+      description: Retrieves a report for all stores
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              type: object
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get Report
+      tags:
+      - analytics
+  /api/v1/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Subscribes a new store
+      parameters:
+      - description: Subscription Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/api.Body'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Subscribe
+      tags:
+      - notifications
+  /api/v1/transactions:
+    get:
+      description: Retrieves all transactions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaction'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Get Transactions
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: Creates a new transaction
+      parameters:
+      - description: Transaction Object
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/models.Transaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Create Transaction
+      tags:
+      - transactions
+  /api/v1/transactions/{id}:
+    delete:
+      description: Deletes a transaction by its ID (refund)
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ApiSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Delete Transaction
+      tags:
+      - transactions
+    get:
+      description: Retrieves a single transaction by its ID
+      parameters:
+      - description: Transaction ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ApiError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ApiError'
+      summary: Get Transaction by ID
+      tags:
+      - transactions
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

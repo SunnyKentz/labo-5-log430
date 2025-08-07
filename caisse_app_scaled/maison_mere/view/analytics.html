@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Analytics - Maison Mère</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+        />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script defer src="/mere/js/main.js"></script>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="/mere/">Maison Mère</a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/mere/home"
+                                >Analytics</a
+                            >
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mere/rapport">Rapports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mere/produits">Produits</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <div class="col-md-15">
+                <div class="card">
+                    <div
+                        class="card-body"
+                        id="alertsList"
+                        style="max-height: 120px; overflow-y: auto"
+                    >
+                        <h5 class="card-title">Alertes</h5>
+                        <!-- ul alerts -->
+                    </div>
+                </div>
+                <div class="card mt-2">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="magasinSelect"
+                                        >Sélectionner un magasin:</label
+                                    >
+                                    <select
+                                        class="form-control"
+                                        id="magasinSelect"
+                                        onchange="updateAnalytics()"
+                                    >
+                                        <option value="tout">Tout</option>
+                                        <!-- options -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts -->
+            <div class="row mt-3">
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Tendances hebdomadaires</h5>
+                            <canvas id="storeSalesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 m-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6 class="card-title">Chiffre d'Affaires Total</h6>
+                            <h3 id="totalRevenue">0$</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Initialize charts
+            let storeSalesChart;
+
+            function initCharts() {
+                // Sales Trend Chart
+                const salesTrendCtx = document
+                    .getElementById("storeSalesChart")
+                    .getContext("2d");
+                storeSalesChart = new Chart(salesTrendCtx, {
+                    type: "line",
+                    data: {
+                        labels: [],
+                        datasets: [
+                            {
+                                label: "Ventes",
+                                data: [],
+                                borderColor: "rgba(75, 192, 192, 1)",
+                                tension: 0.1,
+                            },
+                            {
+                                label: "Retours",
+                                data: [],
+                                borderColor: "rgba(75, 0, 192, 1)",
+                                tension: 0.1,
+                            },
+                        ],
+                    },
+                });
+            }
+            function loadMagasins() {
+                fetch("/mere/api/v1/magasins", { headers: authHeaders() })
+                    .then((response) => response.json())
+                    .then((magasins) => {
+                        const magasinSelect =
+                            document.getElementById("magasinSelect");
+                        magasinSelect.innerHTML =
+                            '<option value="tout">Tous les magasins</option>';
+                        magasins.forEach((magasin) => {
+                            const option = document.createElement("option");
+                            option.value = magasin;
+                            option.innerText = magasin;
+                            magasinSelect.appendChild(option);
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Error loading magasins:", error);
+                    });
+            }
+            function updateAnalytics() {
+                let option = document.getElementById("magasinSelect").value;
+                // Fetch analytics data from API
+                fetch(`/mere/api/v1/analytics/${option}`, { headers: authHeaders() })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        // Update summary cards
+                        document.getElementById("totalRevenue").textContent =
+                            data.vente.total;
+                        // Update charts
+                        updateSalesTrendChart(data);
+                    });
+            }
+
+            function updateSalesTrendChart(data) {
+                storeSalesChart.data.labels = data.vente.dates;
+                storeSalesChart.data.datasets[0].data = data.vente.sales;
+                storeSalesChart.update();
+            }
+
+            function loadAlerts() {
+                fetch("/mere/api/v1/alerts", { headers: authHeaders() })
+                    .then((response) => response.json())
+                    .then((alerts) => {
+                        const alertsList =
+                            document.getElementById("alertsList");
+                        const ul = document.createElement("ul");
+                        ul.className = "list-group";
+
+                        alerts.forEach((alert) => {
+                            const li = document.createElement("li");
+                            li.className = "list-group-item";
+                            li.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="bg-danger">
+                                    <p class="mb-0">${alert.message}</p>
+                                </div>
+                            </div>
+                        `;
+                            ul.appendChild(li);
+                        });
+
+                        // Clear existing alerts and append new ones
+                        alertsList.innerHTML =
+                            '<h5 class="card-title">Alertes</h5>';
+                        alertsList.appendChild(ul);
+                    })
+                    .catch((error) => {
+                        console.error("Error loading alerts:", error);
+                        const alertsList =
+                            document.getElementById("alertsList");
+                        alertsList.innerHTML =
+                            '<h5 class="card-title">Alertes</h5><div class="alert alert-danger">Erreur lors du chargement des alertes</div>';
+                    });
+            }
+
+            // Initialize charts and load data when page loads
+            document.addEventListener("DOMContentLoaded", () => {
+                initCharts();
+                // Set default date range to last 30 days
+                const end = new Date();
+                const start = new Date();
+                start.setDate(start.getDate() - 30);
+                loadMagasins();
+                setInterval(() => {
+                    loadAlerts();
+                    updateAnalytics();
+                }, 1000);
+            });
+        </script>
+    </body>
+</html>

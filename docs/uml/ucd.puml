@@ -1,0 +1,43 @@
+@startuml
+left to right direction
+actor "Commis" as fc
+actor "Manager" as fc2
+rectangle Magasin {
+  usecase "Rechercher un produit" as UC1
+  usecase "Vente de produit" as UC2
+  usecase "Retour de produit" as UC3
+  usecase " Consulter l'état du stock des produits" as UC4
+  usecase " Consulter les transactions" as UC5
+  usecase " Déclencher un réapprovisionnement" as UC6
+}
+fc --> UC1
+fc --> UC2
+fc --> UC3
+fc --> UC4
+fc --> UC5
+fc --> UC6
+
+rectangle "Maison mère" {
+  usecase "Générer un rapport consolidé des ventes" as UC7
+  usecase "Visualiser les performances des magasins\ndans un tableau de bord" as UC8
+  usecase " Mettre à jour les produits" as UC9
+  usecase " Offrir une interface web minimale" as UC10
+  usecase " Alerter la maison mère" as UC11
+  usecase "Enregistrer un nouveau client" as UC13
+}
+UC2 --> UC11
+UC3 --> UC11
+
+UC7 <-- fc2
+UC8 <-- fc2
+UC9 <-- fc2
+UC10 <-- fc2
+UC13 <-- fc2
+
+rectangle "Centre logistique" {
+  usecase "Approvisionner un magasin " as UC12
+}
+
+UC12 <-- fc2
+
+@enduml

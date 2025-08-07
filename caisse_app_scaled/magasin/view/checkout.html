@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Checkout - Caisse App</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+        />
+        <script defer src="/magasin/js/main.js"></script>
+        <style>
+            .cart-item {
+                transition: background-color 0.2s;
+            }
+
+            .cart-item:hover {
+                background-color: #f8f9fa;
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="/magasin/">Caisse App</a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/magasin/home">Produits</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/magasin/transactions"
+                                >Transactions</a
+                            >
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <div class="row g-4">
+                <!-- Cart Summary -->
+                <div class="col-md-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h4 class="mb-0 text-primary">
+                                <i class="bi bi-cart3 me-2"></i>Panier
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="cart-items" class="mb-4">
+                                <!-- Cart items will be dynamically loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Summary -->
+                <div class="col-md-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h4 class="mb-0 text-primary">
+                                <i class="bi bi-receipt me-2"></i>Résumé de la
+                                commande
+                            </h4>
+                        </div>
+                        <div class="card-body">
+                            <div
+                                class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded"
+                            >
+                                <span class="h5 mb-0">Total:</span>
+                                <span class="h4 mb-0 text-primary" id="total"
+                                    >0.00$</span
+                                >
+                            </div>
+                            <form
+                                id="payment-form"
+                                onsubmit="processPayment(event)"
+                            >
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary w-100 py-3"
+                                >
+                                    <i class="bi bi-credit-card me-2"></i
+                                    >Procéder au paiement
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            function loadCart() {
+                // Implementation for loading cart items
+                fetch("/magasin/api/v1/cart", { headers: authHeaders() })
+                    .then((response) => response.json())
+                    .then((cart) => {
+                        if (!cart || cart.length === 0) {
+                            document.getElementById("cart-items").innerHTML =
+                                '<p class="text-center">Votre panier est vide</p>';
+                            updateTotals(0);
+                            return;
+                        }
+                        const cartItems = document.getElementById("cart-items");
+                        let subtotal = 0;
+
+                        cartItems.innerHTML = "";
+                        cart.forEach((item) => {
+                            subtotal += item.prix;
+                            cartItems.innerHTML += `
+                    <div class="cart-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                        <div>
+                            <h6 class="mb-0">${item.nom}</h6>
+                            <small class="text-muted">${item.prix}$ x ${item.quantite}</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="me-3">${item.prix.toFixed(2)}$</span>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${item.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                        });
+
+                        updateTotals(subtotal);
+                    });
+            }
+
+            function updateTotals(subtotal) {
+                const tax = subtotal * 0.2;
+                const total = subtotal + tax;
+
+                document.getElementById("total").textContent =
+                    `${total.toFixed(2)}$`;
+            }
+
+            function removeFromCart(id) {
+                // Implementation for removing items from cart
+                fetch(`/magasin/api/v1/cart/${id}`, {
+                    method: "DELETE",
+                    headers: authHeaders(),
+                })
+                    .then((response) => response.json())
+                    .then((updatedCart) => {
+                        loadCart(); // Reload the cart after deletion
+                    })
+                    .catch((error) => {
+                        console.error("Error removing item from cart:", error);
+                    });
+            }
+
+            function processPayment(event) {
+                event.preventDefault();
+                fetch("/magasin/api/v1/vendre", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders(),
+                    },
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.success) {
+                            // Clear cart and redirect to home page
+                            window.location.href = "/magasin/home";
+                        } else {
+                            alert("Erreur lors du paiement: " + data.error);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error processing payment:", error);
+                        alert("Une erreur est survenue lors du paiement");
+                    });
+            }
+            // Load cart when page loads
+            document.addEventListener("DOMContentLoaded", loadCart);
+        </script>
+    </body>
+</html>

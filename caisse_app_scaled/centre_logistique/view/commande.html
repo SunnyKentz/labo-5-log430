@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Centre Logistique</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+        />
+        <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="/logistique/">Centre Logistique</a>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <div class="col-md-15">
+                <div class="card">
+                    <div class="card-body" id="listCommande">
+                        <!-- ul liste de commandes -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/logistique/js/main.js"></script>
+        <script>
+            function checkNewCommands() {
+                fetch("/logistique/api/v1/commands", { headers: authHeaders() })
+                    .then((response) => response.json())
+                    .then((commands) => {
+                        const listCommande =
+                            document.getElementById("listCommande");
+                        listCommande.innerHTML = ""; // Clear existing commands
+
+                        commands.forEach((command) => {
+                            const li = document.createElement("li");
+                            li.className =
+                                "list-group-item d-flex justify-content-between align-items-center";
+                            li.innerHTML = `
+                        <div class="border rounded p-3 m-2">
+                            <span>${command.message}</span>
+                            <div>
+                                <button class="btn btn-success btn-sm me-2" onclick="acceptCommand(${command.id})">
+                                    <i class="bi bi-check-lg"></i> Accepter
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="refuseCommand(${command.id})">
+                                    <i class="bi bi-x-lg"></i> Refuser
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                            listCommande.appendChild(li);
+                        });
+                    })
+                    .catch((error) =>
+                        console.error("Error fetching commands:", error),
+                    );
+            }
+
+            function acceptCommand(id) {
+                fetch(`/logistique/api/v1/commande/${id}`, {
+                    method: "PUT",
+                    headers: authHeaders(),
+                })
+                    .then((response) => {
+                        if (response.ok) {
+                            checkNewCommands(); // Refresh the list
+                        }
+                    })
+                    .catch((error) =>
+                        console.error("Error accepting command:", error),
+                    );
+            }
+
+            function refuseCommand(id) {
+                fetch(`/logistique/api/v1/commande/${id}`, {
+                    method: "DELETE",
+                    headers: authHeaders(),
+                })
+                    .then((response) => {
+                        if (response.ok) {
+                            checkNewCommands(); // Refresh the list
+                        }
+                    })
+                    .catch((error) =>
+                        console.error("Error refusing command:", error),
+                    );
+            }
+
+            // Check for new commands immediately when page loads
+            checkNewCommands();
+
+            // Set up interval to check for new commands every second
+            setInterval(checkNewCommands, 1000);
+        </script>
+    </body>
+</html>

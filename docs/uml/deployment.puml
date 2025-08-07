@@ -1,0 +1,69 @@
+@startuml
+package "Maison mere" <<frame>>{
+    node "Machine Physique" <<Ubuntu 24.04>> {
+        node "Postgres Container" <<Docker>> {
+            database "PostgreSQL Database" <<SQL DB>> as dbmere{
+            }
+        }
+    }
+    node "Server Maison mere"<<Ubuntu 24.04>> {
+        component mere <<application>>as mere {
+        }
+    }
+}
+
+
+package Magasin <<frame>>{
+    node "Machine Caisse 1" <<Ubuntu 24.04>> {
+        component caisse-app-scaled as app1 {
+        }
+    }
+    node "Machine Caisse 2"<<Ubuntu 24.04>> {
+        component caisse-app-scaled as app2 {
+        }
+    }
+    node "Machine Caisse 3"<<Ubuntu 24.04>> {
+        component caisse-app-scaled as app3 {
+        }
+    }
+    node "Machine Physique Magasin" <<Ubuntu 24.04>> {
+        node "Postgres Container magsin" <<Docker>> {
+            database "PostgreSQL Database" <<SQL DB>> as dbMag{
+            }
+        }
+    }
+}
+
+package "Centre Logistique" <<frame>>{
+
+    node "Machine Physique Logistique" <<Ubuntu 24.04>> {
+        node "Postgres Container Logistique" <<Docker>> {
+            database "PostgreSQL Database" <<SQL DB>> as dbLog{
+            }
+        }
+    }
+
+    node "Server Centre logistique"<<Ubuntu 24.04>> {
+        component logistique <<application>>as log {
+        }
+    }
+}
+
+dbMag -- app1 : TCP
+dbMag -- app2 : TCP
+dbMag -- app3 : TCP
+
+app1 --- mere : HTTP
+app2 --- mere : HTTP
+app3 --- mere : HTTP
+
+mere -- dbmere : TCP
+
+log -- dbLog : TCP
+
+mere -- log : HTTP
+
+app1 --- log : HTTP
+app2 --- log : HTTP
+app3 --- log : HTTP
+@enduml

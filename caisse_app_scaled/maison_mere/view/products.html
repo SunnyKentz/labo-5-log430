@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Gestion des Produits - Maison Mère</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+        />
+        <script defer src="/mere/js/main.js"></script>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="/mere/">Maison Mère</a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mere/home">Analytics</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mere/rapport">Rapports</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/mere/produits"
+                                >Produits</a
+                            >
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-4">
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="searchInput"
+                                placeholder="Rechercher un produit..."
+                                onchange="searchProducts()"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row row-cols-1 row-cols-md-3 g-4" id="products-grid">
+                <!-- Products will be dynamically loaded here -->
+            </div>
+        </div>
+
+        <!-- Edit Price Modal -->
+        <div class="modal fade" id="editPriceModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="editPriceForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Modifier le Prix</h5>
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                            ></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="productId" />
+                            <div class="mb-3">
+                                <label class="form-label">Nouveau Nom</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="nom"
+                                    step="0.01"
+                                    required
+                                />
+                                <label class="form-label">Nouveau prix</label>
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    name="prix"
+                                    step="0.01"
+                                    required
+                                />
+                                <label class="form-label"
+                                    >Nouveau Description</label
+                                >
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="description"
+                                    step="0.01"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                onclick="updatePrice()"
+                            >
+                                Mettre à jour
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            // Prevent form submission on page load
+            document.addEventListener("DOMContentLoaded", function () {
+                const editPriceForm = document.getElementById("editPriceForm");
+                editPriceForm.addEventListener("submit", function (event) {
+                    event.preventDefault();
+                });
+            });
+            function searchProducts() {
+                const searchTerm = document
+                    .getElementById("searchInput")
+                    .value.trim();
+                if (!searchTerm) {
+                    return;
+                }
+
+                fetch(`/mere/api/v1/produits/${searchTerm}`, {
+                    headers: authHeaders(),
+                })
+                    .then((response) => response.json())
+                    .then((products) => {
+                        const grid = document.getElementById("products-grid");
+                        grid.innerHTML = ""; // Clear existing products
+
+                        if (products.length === 0) {
+                            grid.innerHTML =
+                                '<div class="col-12"><p class="text-center">Aucun produit trouvé</p></div>';
+                            return;
+                        }
+
+                        products.forEach((product) => {
+                            grid.innerHTML += `
+                            <div class="col">
+                                <div class="card h-100 product-card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">${product.nom}</h5>
+                                        <p class="card-text">${product.description}</p>
+                                        <p class="card-text"><i>${product.category}</i></p>
+                                        <p class="card-text">${product.quantite}</p>
+                                        <p class="card-text"><strong>Prix: ${product.prix}$</strong></p>
+                                        <button class="btn btn-primary mdf-btn" onclick="modifier(${product.id})">
+                                            Modifier
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Erreur lors de la recherche:", error);
+                        const grid = document.getElementById("products-grid");
+                        grid.innerHTML =
+                            '<div class="col-12"><p class="text-center text-danger">Erreur lors de la recherche des produits</p></div>';
+                    });
+            }
+            let currentID = 0;
+            function modifier(id) {
+                const modal = new bootstrap.Modal(
+                    document.getElementById("editPriceModal"),
+                );
+                modal.show();
+                document.querySelector(
+                    '#editPriceForm input[name="productId"]',
+                ).value = id;
+                currentID = id;
+            }
+
+            function updatePrice() {
+                const form = document.getElementById("editPriceForm");
+
+                const formData = new FormData(form);
+
+                const productData = {
+                    productId: currentID,
+                    nom: formData.get("nom"),
+                    prix: parseFloat(formData.get("prix")),
+                    description: formData.get("description"),
+                };
+
+                fetch("/mere/api/v1/produit", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders(),
+                    },
+                    body: JSON.stringify(productData),
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("Erreur lors de la mise à jour");
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        alert("Produit mis à jour avec succès");
+                        const modal = bootstrap.Modal.getInstance(
+                            document.getElementById("editPriceModal"),
+                        );
+                        modal.hide();
+                        form.reset();
+                        searchProducts(); // Reload the products
+                    })
+                    .catch((error) => {
+                        console.error("Erreur:", error);
+                        alert("Erreur lors de la mise à jour du produit");
+                    });
+            }
+        </script>
+    </body>
+</html>

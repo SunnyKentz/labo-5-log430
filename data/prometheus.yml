@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'magasin'
+    static_configs:
+      - targets: ['172.17.0.1']
+    metrics_path: /magasin/api/v1/metrics
+
+  - job_name: 'mere'
+    static_configs:
+      - targets: ['172.17.0.1']
+    metrics_path: /mere/api/v1/metrics
+
+  - job_name: 'logistique'
+    static_configs:
+      - targets: ['172.17.0.1']
+    metrics_path: /logistique/api/v1/metrics
+
+  - job_name: 'auth'
+    static_configs:
+      - targets: ['172.17.0.1']
+    metrics_path: /auth/api/v1/metrics

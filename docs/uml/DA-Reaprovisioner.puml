@@ -1,0 +1,26 @@
+@startuml
+title Diagramme d'activité - Fonctionnalité de réapprovisionnement
+
+start
+
+:Cliquer sur le bouton "Réapprovisionner";
+
+:Alerter le centre logistique;
+
+:Centre logistique reçoit la demande;
+
+if (Demande acceptée?) then (oui)
+  :Réduire le stock dans le centre logistique;
+  
+  :Augmenter le stock dans le magasin;
+  
+  :Afficher confirmation de réapprovisionnement;
+  
+  stop
+else (non)
+  :Demande refusée par le centre logistique;
+  
+  stop
+endif
+
+@enduml

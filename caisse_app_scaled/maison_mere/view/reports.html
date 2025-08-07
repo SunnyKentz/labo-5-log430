@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Rapports - Maison Mère</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"
+        />
+        <script defer src="/mere/js/main.js"></script>
+    </head>
+
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="/mere/">Maison Mère</a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mere/home">Analytics</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="/mere/rapport"
+                                >Rapports</a
+                            >
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mere/produits">Produits</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Report Results -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div
+                    class="d-flex justify-content-between align-items-center mb-3"
+                >
+                    <h5 class="card-title mb-0">Résultats du Rapport</h5>
+                    <span class="d-flex flex-grow-1"></span>
+                    <button onclick="generateReport()" class="btn btn-primary">
+                        Générer
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Magasin</th>
+                                <th>Nombre de vente total en $</th>
+                                <th>5 produits populaire</th>
+                                <th>Stock des 5 produits populaire</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTable">
+                            <!-- Report data will be loaded here -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-primary">
+                                <td colspan="5" class="text-end">
+                                    <strong>Total Général</strong>
+                                </td>
+                                <td id="reportTotal">0.00$</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            function generateReport() {
+                fetch(`/mere/api/v1/raport`, { headers: authHeaders() })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        updateReportTable(data);
+                        updateSummary(data);
+                    });
+            }
+
+            function updateReportTable(sales) {
+                const tbody = document.getElementById("reportTable");
+                tbody.innerHTML = "";
+                let total = 0;
+
+                sales.forEach((data) => {
+                    const row = document.createElement("tr");
+
+                    row.innerHTML = `
+                    <td>${data.magasin}</td>
+                    <td>${data.total}</td>
+                    <td><ul>${data.best5.map((prod) => `<li>${prod}</li>`).join("")}</ul></td>
+                    <td><ul>${Object.keys(data.stock5)
+                        .map((key) => `<li>${key} : ${data.stock5[key]}</li>`)
+                        .join("")}</ul></td>
+                `;
+                    tbody.appendChild(row);
+                });
+
+                document.getElementById("reportTotal").textContent =
+                    `${total.toFixed(2)}$`;
+            }
+
+            function updateSummary(summary) {
+                let total = 0;
+                summary.forEach((d) => {
+                    total += d.total;
+                });
+
+                document.getElementById("reportTotal").textContent = total;
+            }
+        </script>
+    </body>
+</html>
