@@ -109,7 +109,7 @@ Le projet `caisse_app_scaled` suit une architecture microservices distribuée av
   - `view/` : Dashboards et interfaces d'analytics
   - `app.go` : Point d'entrée du service de supervision
 
-#### 3. **auth/** - Service de supervision
+#### 4. **auth/** - Service de Authentification
 - **Port : 8092**
 - **Responsabilités :** l'authentification des employées et clients
 - **Structure interne :**
