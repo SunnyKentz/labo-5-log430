@@ -87,7 +87,7 @@ jobs:
           cd caisse_app_scaled && go run github.com/swaggo/swag/cmd/swag init -d centre_logistique,models,utils -o ../docs/swagger/logistique -g api/api_data.go && cd ..
           cd caisse_app_scaled && go run github.com/swaggo/swag/cmd/swag init -d maison_mere,models,utils -o ../docs/swagger/mere -g api/api_data.go && cd ..
           cd caisse_app_scaled && go run github.com/swaggo/swag/cmd/swag init -d auth,models,utils -o ../docs/swagger/auth -g api/api.go
-
+          cd ..
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o out/magasin/ ./caisse_app_scaled/magasin/app.go
           cp -rf caisse_app_scaled/magasin/view out/magasin/
           cp -rf caisse_app_scaled/commonjs out/magasin/
